@@ -1,0 +1,16 @@
+spring:
+    application:
+      name: SMPP Pool Demo Application
+
+smpp:
+  host: 127.0.0.1
+  port: 8056
+  systemid: systemid
+  password: password
+  system-type: cp
+
+logging:
+  level:
+    org.jsmpp: debug
+    org.springframework: info
+    com.github.pmoerenhout: debug

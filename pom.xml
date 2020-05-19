@@ -6,8 +6,9 @@
 
   <groupId>com.github.pmoerenhout</groupId>
   <artifactId>jsmpp-pool</artifactId>
-  <packaging>pom</packaging>
   <version>1.0-SNAPSHOT</version>
+
+  <packaging>pom</packaging>
 
   <modules>
     <module>jsmpp-pool-jar</module>
@@ -15,20 +16,30 @@
   </modules>
 
   <properties>
-    <maven.compiler.source>1.6</maven.compiler.source>
-    <maven.compiler.target>1.6</maven.compiler.target>
+    <maven.compiler.source>1.7</maven.compiler.source>
+    <maven.compiler.target>1.7</maven.compiler.target>
 
-    <jsmpp.version>2.3.9</jsmpp.version>
-    <commons-pool2.version>2.5.0</commons-pool2.version>
-    <guava.version>19.0</guava.version>
-    <spring-boot.version>1.5.22.RELEASE</spring-boot.version>
+    <jsmpp.version>2.3.10-SNAPSHOT</jsmpp.version>
+    <commons-pool2.version>2.8.0</commons-pool2.version>
+    <guava.version>29.0-jre</guava.version>
+    <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
     <slf4j.version>1.7.30</slf4j.version>
   </properties>
 
+  <dependencies>
+    <dependency>
+      <groupId>org.jsmpp</groupId>
+      <artifactId>jsmpp</artifactId>
+      <version>${jsmpp.version}</version>
+    </dependency>
+  </dependencies>
+
   <dependencyManagement>
     <dependencies>
+
+      <!-- internal dependencies -->
       <dependency>
-        <groupId>net.moerenhout</groupId>
+        <groupId>com.github.pmoerenhout</groupId>
         <artifactId>jsmpp-pool-jar</artifactId>
         <version>1.0-SNAPSHOT</version>
       </dependency>

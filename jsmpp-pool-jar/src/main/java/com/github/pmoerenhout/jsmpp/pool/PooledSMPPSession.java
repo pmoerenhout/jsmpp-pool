@@ -7,7 +7,9 @@ import org.apache.commons.pool2.PoolUtils;
 import org.apache.commons.pool2.impl.DefaultPooledObjectInfo;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+import org.jsmpp.extra.SessionState;
 import org.jsmpp.session.MessageReceiverListener;
+import org.jsmpp.session.Session;
 import org.jsmpp.session.SessionStateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,7 +36,7 @@ public class PooledSMPPSession {
         enquireLinkTimer, transactionTimer, bindTimeout, maxTotal, minIdle, maxIdle, messageRate, maxConcurrentRequests, pduProcessorDegree);
     this.id = UUID.randomUUID().toString();
     this.messageRate = messageRate;
-    PoolUtils.prefill(pool, pool.getMaxTotal());
+    this.pool.addObjects(pool.getMaxTotal());
     PoolUtils.checkMinIdle(pool, pool.getMinIdle(), 15000);
   }
 
@@ -55,10 +57,26 @@ public class PooledSMPPSession {
     LOG.info("createObjectPool {}:{} systemId:{} systemType:{}", host, port, systemId, systemType);
     LOG.info("timers enquire:{} transaction:{} bind:{}", enquireLinkTimer, transactionTimer, bindTimeout);
     LOG.info("messageRate:{} maxConcurrentRequests:{} pduProcessorDegree:{}", messageRate, maxConcurrentRequests, pduProcessorDegree);
+
+    SessionStateListener pooledSessionStateListener = new SessionStateListener() {
+      @Override
+      public void onStateChange(final SessionState newState, final SessionState oldState, final Session session) {
+        if (newState == SessionState.CLOSED || newState == SessionState.UNBOUND) {
+          LOG.debug("Invalidating closed or unbound state");
+          try {
+            pool.invalidateObject((ThrottledSMPPSession) session);
+          } catch (Exception e) {
+            LOG.error("Could not invalidate pooled object", e);
+          }
+        }
+        sessionStateListener.onStateChange(newState, oldState, session);
+      }
+    };
+
     final GenericObjectPool<ThrottledSMPPSession> pool = new GenericObjectPool<ThrottledSMPPSession>(
         new PooledSmppSessionFactory(host, port, systemId, password, systemType, messageReceiverListener,
-            sessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout, messageRate, maxConcurrentRequests, pduProcessorDegree));
-    LOG.info("eviction idle time:{}", enquireLinkTimer * 2);
+            pooledSessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout, messageRate, maxConcurrentRequests, pduProcessorDegree));
+    LOG.info("eviction idle time:{} (enquireLinkTime * 2)", enquireLinkTimer * 2);
     final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
     config.setLifo(false);
     config.setEvictionPolicyClassName(JsmppEvictionPolicy.class.getName());
@@ -78,7 +96,7 @@ public class PooledSMPPSession {
   }
 
   public ThrottledSMPPSession borrowObject() throws Exception {
-    LOG.debug("Borrow Object from pool {}", id);
+    LOG.trace("Borrow Object from pool {}", id);
     ThrottledSMPPSession session = pool.borrowObject();
     if (messageRate != 0) {
       LOG.debug("Session {} is throttled to {} msg/s", session.getSessionId(), messageRate);
@@ -87,7 +105,7 @@ public class PooledSMPPSession {
   }
 
   public ThrottledSMPPSession useOrBorrowObject(final ThrottledSMPPSession session) throws Exception {
-    LOG.debug("Pool {} useOrBorrowObject session:{}", id, session != null ? session.getSessionId() : "null");
+    LOG.trace("Pool {} useOrBorrowObject session:{}", id, session != null ? session.getSessionId() : "null");
     if (session != null && session.getSessionState().isBound()) {
       return session;
     }
@@ -95,12 +113,12 @@ public class PooledSMPPSession {
   }
 
   public void returnObject(final ThrottledSMPPSession session) throws Exception {
-    LOG.debug("Pool {} returnObject session:{}", id, session != null ? session.getSessionId() : "null");
+    LOG.trace("Pool {} returnObject session:{}", id, session != null ? session.getSessionId() : "null");
     pool.returnObject(session);
   }
 
   public void invalidateObject(final ThrottledSMPPSession session) throws Exception {
-    LOG.debug("Pool {} invalidateObject session:{}", id, session != null ? session.getSessionId() : "null");
+    LOG.trace("Pool {} invalidateObject session:{}", id, session != null ? session.getSessionId() : "null");
     pool.invalidateObject(session);
   }
 
@@ -116,4 +134,5 @@ public class PooledSMPPSession {
   public Set<DefaultPooledObjectInfo> listAllObjects() {
     return pool.listAllObjects();
   }
+
 }

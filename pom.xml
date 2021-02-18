@@ -19,10 +19,10 @@
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
 
-    <jsmpp.version>2.3.10-SNAPSHOT</jsmpp.version>
+    <jsmpp.version>2.3.11</jsmpp.version>
     <commons-pool2.version>2.8.0</commons-pool2.version>
     <guava.version>29.0-jre</guava.version>
-    <spring-boot.version>2.3.0.RELEASE</spring-boot.version>
+    <spring-boot.version>2.3.8.RELEASE</spring-boot.version>
     <slf4j.version>1.7.30</slf4j.version>
   </properties>
 

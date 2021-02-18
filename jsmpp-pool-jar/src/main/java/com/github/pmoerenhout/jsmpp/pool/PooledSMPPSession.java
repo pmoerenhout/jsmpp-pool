@@ -7,9 +7,7 @@ import org.apache.commons.pool2.PoolUtils;
 import org.apache.commons.pool2.impl.DefaultPooledObjectInfo;
 import org.apache.commons.pool2.impl.GenericObjectPool;
 import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
-import org.jsmpp.extra.SessionState;
 import org.jsmpp.session.MessageReceiverListener;
-import org.jsmpp.session.Session;
 import org.jsmpp.session.SessionStateListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,24 +56,9 @@ public class PooledSMPPSession {
     LOG.info("timers enquire:{} transaction:{} bind:{}", enquireLinkTimer, transactionTimer, bindTimeout);
     LOG.info("messageRate:{} maxConcurrentRequests:{} pduProcessorDegree:{}", messageRate, maxConcurrentRequests, pduProcessorDegree);
 
-    SessionStateListener pooledSessionStateListener = new SessionStateListener() {
-      @Override
-      public void onStateChange(final SessionState newState, final SessionState oldState, final Session session) {
-        if (newState == SessionState.CLOSED || newState == SessionState.UNBOUND) {
-          LOG.debug("Invalidating closed or unbound state");
-          try {
-            pool.invalidateObject((ThrottledSMPPSession) session);
-          } catch (Exception e) {
-            LOG.error("Could not invalidate pooled object", e);
-          }
-        }
-        sessionStateListener.onStateChange(newState, oldState, session);
-      }
-    };
-
-    final GenericObjectPool<ThrottledSMPPSession> pool = new GenericObjectPool<ThrottledSMPPSession>(
+    final GenericObjectPool<ThrottledSMPPSession> pool = new GenericObjectPool<>(
         new PooledSmppSessionFactory(host, port, systemId, password, systemType, messageReceiverListener,
-            pooledSessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout, messageRate, maxConcurrentRequests, pduProcessorDegree));
+            sessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout, messageRate, maxConcurrentRequests, pduProcessorDegree));
     LOG.info("eviction idle time:{} (enquireLinkTime * 2)", enquireLinkTimer * 2);
     final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
     config.setLifo(false);

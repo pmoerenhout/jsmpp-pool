@@ -1,20 +1,21 @@
 /*
- * Licensed under the Apache License, Version 2.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *    http://www.apache.org/licenses/LICENSE-2.0
- * 
+ *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
+ *
  */
-package com.github.pmoerenhout.jsmpp.pool;
+package com.github.pmoerenhout.jsmpp.pool.demo;
 
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 import org.jsmpp.bean.AlertNotification;
 import org.jsmpp.bean.DataSm;
@@ -26,13 +27,13 @@ import org.jsmpp.session.DataSmResult;
 import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.Session;
 import org.jsmpp.util.InvalidDeliveryReceiptException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MessageReceiverListenerImpl implements MessageReceiverListener {
-  private static final Logger LOG = LoggerFactory.getLogger(MessageReceiverListenerImpl.class);
-
-  private Charset charset = Charset.forName("ISO-8859-1");
+  
+  private Charset charset = StandardCharsets.ISO_8859_1;
 
   public void onAcceptDeliverSm(final DeliverSm deliverSm)
       throws ProcessRequestException {
@@ -45,16 +46,16 @@ public class MessageReceiverListenerImpl implements MessageReceiverListener {
         // lets cover the id to hex string format
         long id = Long.parseLong(delReceipt.getId()) & 0xffffffff;
         final String messageId = Long.toString(id, 16).toUpperCase();
-                
-        /*
-        * you can update the status of your submitted message on the
-        * database based on messageId
-        */
 
-        LOG.info("Receiving delivery receipt for message '{}' from {} to {} : {}", messageId, deliverSm.getSourceAddr(), deliverSm.getDestAddress(),
+        /*
+         * you can update the status of your submitted message on the
+         * database based on messageId
+         */
+
+        log.info("Receiving delivery receipt for message '{}' from {} to {} : {}", messageId, deliverSm.getSourceAddr(), deliverSm.getDestAddress(),
             delReceipt);
       } catch (InvalidDeliveryReceiptException e) {
-        LOG.error("Failed getting delivery receipt", e);
+        log.error("Failed getting delivery receipt", e);
       }
     } else {
       // this message is regular short message
@@ -63,11 +64,11 @@ public class MessageReceiverListenerImpl implements MessageReceiverListener {
        * you can save the incoming message to database.
        */
 
-      LOG.info("Receiving message : {}", new String(deliverSm.getShortMessage(), charset));
+      log.info("Receiving message : {}", new String(deliverSm.getShortMessage(), charset));
     }
   }
 
-  public void onAcceptAlertNotification(AlertNotification alertNotification) {
+  public void onAcceptAlertNotification(final AlertNotification alertNotification) {
   }
 
   public DataSmResult onAcceptDataSm(final DataSm dataSm, final Session source)

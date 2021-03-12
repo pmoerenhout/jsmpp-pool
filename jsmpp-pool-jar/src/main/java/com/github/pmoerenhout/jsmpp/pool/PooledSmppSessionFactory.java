@@ -12,6 +12,9 @@ import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.SessionStateListener;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledSMPPSession> {
 
   private String host;
@@ -66,23 +69,38 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
     session.setMessageReceiverListener(messageReceiverListener);
     session.addSessionStateListener(sessionStateListener);
     session.connectAndBind(host, port, bindParameter, bindTimeout);
+    log.debug("Created new session {}", session.getSessionId());
     return session;
   }
 
   @Override
   public PooledObject<ThrottledSMPPSession> wrap(ThrottledSMPPSession session) {
-    return new DefaultPooledObject<ThrottledSMPPSession>(session);
+    return new DefaultPooledObject<>(session);
   }
 
   @Override
   public boolean validateObject(PooledObject<ThrottledSMPPSession> pooledObject) {
+    final ThrottledSMPPSession session = pooledObject.getObject();
+    log.debug("validateObject {} {}", session.getSessionId(), session.getSessionState());
     return pooledObject.getObject().getSessionState().isBound();
   }
 
   @Override
   public void destroyObject(PooledObject<ThrottledSMPPSession> pooledObject)
       throws Exception {
-    pooledObject.getObject().unbindAndClose();
+    final ThrottledSMPPSession session = pooledObject.getObject();
+    log.debug("destroyObject {} {}", session.getSessionId(), session.getSessionState());
+    session.unbindAndClose();
+  }
+
+  public void activateObject(PooledObject<ThrottledSMPPSession> p) throws Exception {
+    final ThrottledSMPPSession session = p.getObject();
+    log.debug("activateObject {} {}", session.getSessionId(), session.getSessionState());
+  }
+
+  public void passivateObject(PooledObject<ThrottledSMPPSession> p) throws Exception {
+    final ThrottledSMPPSession session = p.getObject();
+    log.debug("passivateObject {}", session.getSessionId(), session.getSessionState());
   }
 
 }

@@ -58,7 +58,7 @@ public class ThrottledSMPPSession extends SMPPSession {
       throw new IllegalArgumentException("The rate parameter must be > 0");
     }
     if (maxConcurrentRequests < 1) {
-      throw new IllegalArgumentException("The maxConcurrentRequests paramater must be >= 1");
+      throw new IllegalArgumentException("The maxConcurrentRequests parameter must be >= 1");
     }
   }
 

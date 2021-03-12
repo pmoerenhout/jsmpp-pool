@@ -6,22 +6,21 @@ import org.apache.commons.pool2.PooledObject;
 import org.apache.commons.pool2.impl.EvictionConfig;
 import org.apache.commons.pool2.impl.EvictionPolicy;
 import org.jsmpp.session.SMPPSession;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class JsmppEvictionPolicy<T> implements EvictionPolicy<T> {
-
-  private static final Logger LOG = LoggerFactory.getLogger(JsmppEvictionPolicy.class);
 
   @Override
   public boolean evict(EvictionConfig config, PooledObject<T> underTest, int idleCount) {
-    LOG.trace("Evict {} (idle count {})", underTest, idleCount);
+    log.trace("Evict {} (idle count {})", underTest, idleCount);
     final SMPPSession session = (SMPPSession) underTest.getObject();
     final long idleTime = System.currentTimeMillis() - session.getLastActivityTimestamp();
-    LOG.info("State of SMPP session {} is {} with last activity at {} ({}ms idle)",
+    log.info("State of SMPP session {} is {} with last activity at {} ({}ms idle)",
         session.getSessionId(), session.getSessionState(), new Date(session.getLastActivityTimestamp()), idleTime);
     if (!session.getSessionState().isBound() || config.getIdleEvictTime() < idleTime) {
-      LOG.warn("Evicted SMPP session {} ({} or {} < {})", session.getSessionId(), session.getSessionState(), config.getIdleEvictTime(), idleTime);
+      log.warn("Evicted SMPP session {} ({} or {} < {})", session.getSessionId(), session.getSessionState(), config.getIdleEvictTime(), idleTime);
       return true;
     }
 //    if ((config.getIdleSoftEvictTime() < underTest.getIdleTimeMillis() &&

@@ -65,16 +65,16 @@ public class PooledSMPPSession<T extends SMPPSession> implements AutoCloseable {
     config.setLifo(false);
     config.setEvictionPolicyClassName(JsmppEvictionPolicy.class.getName());
     config.setFairness(true);
-    config.setTimeBetweenEvictionRunsMillis(enquireLinkTimer * 2);
-    config.setMinEvictableIdleTimeMillis(enquireLinkTimer * 2);
-    config.setSoftMinEvictableIdleTimeMillis(enquireLinkTimer * 2);
+    config.setTimeBetweenEvictionRunsMillis(15000);
+    config.setMinEvictableIdleTimeMillis(60000);
+    config.setSoftMinEvictableIdleTimeMillis(60000);
     config.setMaxTotal(maxTotal);
     config.setMinIdle(minIdle);
     config.setMaxIdle(maxIdle);
     config.setTestOnCreate(true);
     config.setTestOnBorrow(true);
     config.setTestWhileIdle(true);
-    config.setTestOnReturn(false);
+    config.setTestOnReturn(true);
     pool.setConfig(config);
 
 //    final AbandonedConfig abandonedConfig = new AbandonedConfig();

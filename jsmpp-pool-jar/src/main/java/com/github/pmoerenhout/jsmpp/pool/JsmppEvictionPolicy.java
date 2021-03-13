@@ -14,7 +14,7 @@ public class JsmppEvictionPolicy<T> implements EvictionPolicy<T> {
 
   @Override
   public boolean evict(EvictionConfig config, PooledObject<T> underTest, int idleCount) {
-    log.trace("Evict {} (idle count {})", underTest, idleCount);
+    log.info("Evict {} (idle count {})", underTest, idleCount);
     final SMPPSession session = (SMPPSession) underTest.getObject();
     final long idleTime = System.currentTimeMillis() - session.getLastActivityTimestamp();
     log.info("State of SMPP session {} is {} with last activity at {} ({}ms idle)",

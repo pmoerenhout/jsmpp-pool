@@ -105,7 +105,7 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
       sessionListener.setPduProcessorDegree(processorDegree);
       trafficWatcherThread = new TrafficWatcherThread();
       trafficWatcherThread.start();
-      log.info("Listening on port {}", port);
+      log.info("Server listening on port {}", port);
       while (running) {
         SMPPServerSession serverSession = sessionListener.accept();
         log.info("Accepting connection for session {}", serverSession.getSessionId());
@@ -124,7 +124,6 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
 //      } catch (InterruptedException e) {
 //        log.error("Join of the trafficWatcher thread failed", e);
 //      }
-      // sessionListener = null;
       waitBindExecService.shutdown();
       scheduledExecService.shutdown();
     }
@@ -317,9 +316,19 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
         }
         int requestsPerSecond = requestCounter.getAndSet(0);
         log.info("Requests per second: {}", requestsPerSecond);
+        logSessions();
       }
       log.info("Stopped traffic watcher...");
     }
+  }
+
+  public void closeBoundSessions(){
+    sessions.values().stream().filter(s -> s.getSessionState().isBound()).forEach(Session::close);
+  }
+
+  public void logSessions(){
+    sessions.values().stream()
+        .forEach(s->log.info("Session {} in state {}",s.getSessionId(), s.getSessionState()));
   }
 
 }

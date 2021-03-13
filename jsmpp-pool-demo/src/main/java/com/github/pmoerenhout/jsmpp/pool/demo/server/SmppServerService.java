@@ -45,6 +45,10 @@ public class SmppServerService {
     smppTaskExecutor.execute(server);
   }
 
+  public void closeBoundSessions(){
+    server.closeBoundSessions();
+  }
+
   public void stop() {
     server.stop();
   }

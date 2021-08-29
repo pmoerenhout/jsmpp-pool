@@ -37,6 +37,9 @@ public class ClientSmppService {
   @Value("${smpp.client.port}")
   private int port;
 
+  @Value("${smpp.client.ssl}")
+  private boolean ssl;
+
   @Value("${smpp.client.systemid}")
   private String systemId;
 
@@ -63,8 +66,9 @@ public class ClientSmppService {
   private int pduProcessorDegree = 10;
 
   public void start() throws Exception {
+    log.info("Starting client to {}:{} ({})", host, port, (ssl ? "SSL" : "no SSL"));
     pooledSMPPSession = new PooledSMPPSession(
-        host, port, systemId, password, systemType, messageReceiverListener,
+        host, port, ssl, systemId, password, systemType, messageReceiverListener,
         sessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout,
         maxTotal, minIdle, maxIdle, rate, maxConcurrentRequests, pduProcessorDegree);
   }

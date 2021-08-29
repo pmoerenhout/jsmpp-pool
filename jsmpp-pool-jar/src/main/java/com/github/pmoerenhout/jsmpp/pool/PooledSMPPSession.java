@@ -1,5 +1,6 @@
 package com.github.pmoerenhout.jsmpp.pool;
 
+import java.time.Duration;
 import java.util.Set;
 import java.util.UUID;
 
@@ -20,7 +21,7 @@ public class PooledSMPPSession<T extends SMPPSession> implements AutoCloseable {
   private final double messageRate;
   private GenericObjectPool<T> pool;
 
-  public PooledSMPPSession(final String host, final int port, final String systemId,
+  public PooledSMPPSession(final String host, final int port, final boolean ssl, final String systemId,
                            final String password, final String systemType,
                            final MessageReceiverListener messageReceiverListener,
                            final SessionStateListener sessionStateListener,
@@ -29,17 +30,17 @@ public class PooledSMPPSession<T extends SMPPSession> implements AutoCloseable {
                            final int maxTotal,
                            final int minIdle,
                            final int maxIdle, final double messageRate, final int maxConcurrentRequests, final int pduProcessorDegree) throws Exception {
-    this.pool = createObjectPool(host, port, systemId, password, systemType,
+    this.pool = createObjectPool(host, port, ssl, systemId, password, systemType,
         messageReceiverListener,
         sessionStateListener,
         enquireLinkTimer, transactionTimer, bindTimeout, maxTotal, minIdle, maxIdle, messageRate, maxConcurrentRequests, pduProcessorDegree);
     this.id = UUID.randomUUID().toString();
     this.messageRate = messageRate;
-    this.pool.addObjects(pool.getMaxTotal());
+    //this.pool.addObjects(pool.getMaxTotal());
     PoolUtils.checkMinIdle(pool, pool.getMinIdle(), 5000);
   }
 
-  private GenericObjectPool createObjectPool(final String host, final int port,
+  private GenericObjectPool createObjectPool(final String host, final int port, final boolean ssl,
                                              final String systemId, final String password,
                                              final String systemType,
                                              final MessageReceiverListener messageReceiverListener,
@@ -53,21 +54,24 @@ public class PooledSMPPSession<T extends SMPPSession> implements AutoCloseable {
                                              final double messageRate,
                                              final int maxConcurrentRequests,
                                              final int pduProcessorDegree) {
-    log.debug("createObjectPool {}:{} systemId:{} systemType:{}", host, port, systemId, systemType);
+    log.debug("createObjectPool {}:{} ssl:{} systemId:{} systemType:{}", host, port, ssl, systemId, systemType);
     log.debug("timers enquire:{} transaction:{} bind:{}", enquireLinkTimer, transactionTimer, bindTimeout);
     log.debug("messageRate:{} maxConcurrentRequests:{} pduProcessorDegree:{}", messageRate, maxConcurrentRequests, pduProcessorDegree);
 
     final GenericObjectPool<ThrottledSMPPSession> pool = new GenericObjectPool<>(
-        new PooledSmppSessionFactory(host, port, systemId, password, systemType, messageReceiverListener,
+        new PooledSmppSessionFactory(host, port, ssl, systemId, password, systemType, messageReceiverListener,
             sessionStateListener, enquireLinkTimer, transactionTimer, bindTimeout, messageRate, maxConcurrentRequests, pduProcessorDegree));
     log.info("eviction idle time:{} (enquireLinkTime * 2)", enquireLinkTimer * 2);
     final GenericObjectPoolConfig config = new GenericObjectPoolConfig();
     config.setLifo(false);
     config.setEvictionPolicyClassName(JsmppEvictionPolicy.class.getName());
     config.setFairness(true);
-    config.setTimeBetweenEvictionRunsMillis(15000);
-    config.setMinEvictableIdleTimeMillis(60000);
-    config.setSoftMinEvictableIdleTimeMillis(60000);
+    //config.setTimeBetweenEvictionRunsMillis(15000);
+    config.setTimeBetweenEvictionRuns(Duration.ofMillis(15000));
+    //config.setMinEvictableIdleTimeMillis(60000);
+    config.setMinEvictableIdleTime(Duration.ofMillis(60000));
+    //config.setSoftMinEvictableIdleTimeMillis(60000);
+    config.setSoftMinEvictableIdleTime(Duration.ofMillis(60000));
     config.setMaxTotal(maxTotal);
     config.setMinIdle(minIdle);
     config.setMaxIdle(maxIdle);
@@ -88,6 +92,7 @@ public class PooledSMPPSession<T extends SMPPSession> implements AutoCloseable {
   public T borrowObject() throws Exception {
     log.trace("Borrow Object from pool {}", id);
     T session = pool.borrowObject();
+    log.trace("Borrowed Object from pool {}", id);
     if (messageRate != 0) {
       log.debug("Session {} is throttled to {} msg/s", session.getSessionId(), messageRate);
     }

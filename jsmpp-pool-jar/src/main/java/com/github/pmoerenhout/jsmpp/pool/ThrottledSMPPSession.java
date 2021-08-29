@@ -24,6 +24,14 @@ public class ThrottledSMPPSession extends SMPPSession {
     this.semaphore = new Semaphore(maxConcurrentRequests, true);
   }
 
+  public ThrottledSMPPSession(final ConnectionFactory connFactory, final double rate, final int maxConcurrentRequests) {
+    super(connFactory);
+    checkArguments(rate, maxConcurrentRequests);
+    this.rateLimiter = RateLimiter.create(rate);
+    this.maxConcurrentRequests = maxConcurrentRequests;
+    this.semaphore = new Semaphore(maxConcurrentRequests, true);
+  }
+
   public ThrottledSMPPSession(final PDUSender pduSender, final PDUReader pduReader,
                               final ConnectionFactory connFactory, final double rate, final int maxConcurrentRequests) {
     super(pduSender, pduReader, connFactory);

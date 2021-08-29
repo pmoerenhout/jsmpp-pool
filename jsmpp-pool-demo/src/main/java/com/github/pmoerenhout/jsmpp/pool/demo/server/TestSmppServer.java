@@ -215,6 +215,7 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
     MessageId messageId = messageIDGenerator.newMessageId();
     OptionalParameter.Message_payload messagePayload = (OptionalParameter.Message_payload) dataSm.getOptionalParameter(OptionalParameter.Tag.MESSAGE_PAYLOAD);
     log.info("Receiving data_sm {}, and return message id {}", messagePayload.getValueAsString(), messageId.getValue());
+    metricsService.increment("server", "data_sm");
     requestCounter.incrementAndGet();
     DataSmResult dataSmResult = new DataSmResult(messageId, new OptionalParameter[]{});
     return dataSmResult;
@@ -222,14 +223,25 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
 
   public void onAcceptCancelSm(CancelSm cancelSm, SMPPServerSession source)
       throws ProcessRequestException {
-    log.warn("CancelSm not implemented");
+    log.warn("cancel_sm not implemented");
+    metricsService.increment("server", "cancel_sm");
     throw new ProcessRequestException(CANCELSM_NOT_IMPLEMENTED, SMPPConstant.STAT_ESME_RCANCELFAIL);
   }
 
   public void onAcceptReplaceSm(ReplaceSm replaceSm, SMPPServerSession source)
       throws ProcessRequestException {
-    log.warn("ReplaceSm not implemented");
+    log.warn("replace_sm not implemented");
+    metricsService.increment("server", "replace_sm");
     throw new ProcessRequestException(REPLACESM_NOT_IMPLEMENTED, SMPPConstant.STAT_ESME_RREPLACEFAIL);
+  }
+
+  public void closeBoundSessions() {
+    sessions.values().stream().filter(s -> s.getSessionState().isBound()).forEach(Session::close);
+  }
+
+  public void logSessions() {
+    sessions.values().stream()
+        .forEach(s -> log.info("Session {} in state {}", s.getSessionId(), s.getSessionState()));
   }
 
   private class SessionStateListenerImpl implements SessionStateListener {
@@ -320,15 +332,6 @@ public class TestSmppServer implements Runnable, ServerMessageReceiverListener {
       }
       log.info("Stopped traffic watcher...");
     }
-  }
-
-  public void closeBoundSessions(){
-    sessions.values().stream().filter(s -> s.getSessionState().isBound()).forEach(Session::close);
-  }
-
-  public void logSessions(){
-    sessions.values().stream()
-        .forEach(s->log.info("Session {} in state {}",s.getSessionId(), s.getSessionState()));
   }
 
 }

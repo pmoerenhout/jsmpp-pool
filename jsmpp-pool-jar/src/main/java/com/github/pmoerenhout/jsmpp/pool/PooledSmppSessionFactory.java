@@ -11,6 +11,7 @@ import org.jsmpp.bean.TypeOfNumber;
 import org.jsmpp.session.BindParameter;
 import org.jsmpp.session.MessageReceiverListener;
 import org.jsmpp.session.SessionStateListener;
+import org.jsmpp.session.connection.socket.NoTrustSSLSocketConnectionFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -19,6 +20,7 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
 
   private String host;
   private int port;
+  private boolean ssl;
   private String systemId;
   private String password;
   private String systemType;
@@ -31,7 +33,7 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
   private int maxConcurrentRequests;
   private int pduProcessorDegree;
 
-  public PooledSmppSessionFactory(final String host, final int port,
+  public PooledSmppSessionFactory(final String host, final int port, final boolean ssl,
                                   final String systemId, final String password,
                                   final String systemType,
                                   final MessageReceiverListener messageReceiverListener,
@@ -44,6 +46,7 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
                                   final int pduProcessorDegree) {
     this.host = host;
     this.port = port;
+    this.ssl = ssl;
     this.systemId = systemId;
     this.password = password;
     this.systemType = systemType;
@@ -59,7 +62,7 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
 
   @Override
   public ThrottledSMPPSession create() throws IOException {
-    final ThrottledSMPPSession session = new ThrottledSMPPSession(messageRate, maxConcurrentRequests);
+    final ThrottledSMPPSession session = getThrottledSMPPSession(ssl, messageRate, maxConcurrentRequests);
     final BindParameter bindParameter = new BindParameter(
         BindType.BIND_TRX, systemId, password, systemType, TypeOfNumber.UNKNOWN, NumberingPlanIndicator.UNKNOWN,
         null);
@@ -103,4 +106,10 @@ public class PooledSmppSessionFactory extends BasePooledObjectFactory<ThrottledS
     log.debug("passivateObject {}", session.getSessionId(), session.getSessionState());
   }
 
+  private ThrottledSMPPSession getThrottledSMPPSession(final boolean ssl, final double messageRate, final int maxConcurrentRequests) {
+    if (ssl) {
+      return new ThrottledSMPPSession(new NoTrustSSLSocketConnectionFactory(), messageRate, maxConcurrentRequests);
+    }
+    return new ThrottledSMPPSession(messageRate, maxConcurrentRequests);
+  }
 }

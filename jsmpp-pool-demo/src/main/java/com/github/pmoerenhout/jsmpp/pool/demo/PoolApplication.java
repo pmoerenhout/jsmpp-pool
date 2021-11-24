@@ -1,17 +1,11 @@
 package com.github.pmoerenhout.jsmpp.pool.demo;
 
-import org.jsmpp.session.MessageReceiverListener;
-import org.jsmpp.session.SessionStateListener;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
-import org.springframework.context.annotation.Bean;
-import org.springframework.core.task.TaskExecutor;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.github.pmoerenhout.jsmpp.pool.demo.client.ClientSmppService;
 import com.github.pmoerenhout.jsmpp.pool.demo.server.MetricsService;
@@ -24,11 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PoolApplication implements CommandLineRunner {
 
   @Autowired
-  private AnnotationConfigApplicationContext context;
-
-  @Autowired
   private ClientSmppService client;
-
   @Autowired
   private SmppServerService server;
   @Autowired
@@ -68,7 +58,6 @@ public class PoolApplication implements CommandLineRunner {
       log.info("Close all server sessions");
       server.closeBoundSessions();
 
-
       // Enable for more details
       // metricsService.show();
 
@@ -83,25 +72,6 @@ public class PoolApplication implements CommandLineRunner {
     } finally {
       log.info("Finished application");
     }
-  }
-
-  @Bean
-  public MessageReceiverListener messageReceiverListener() {
-    return new MessageReceiverListenerImpl();
-  }
-
-  @Bean
-  public SessionStateListener sessionStateListener() {
-    return new SessionStateListenerImpl();
-  }
-
-  @Bean
-  public TaskExecutor smppTaskExecutor() {
-    ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-    executor.setThreadNamePrefix("smpp-");
-    executor.setCorePoolSize(1);
-    executor.setMaxPoolSize(1);
-    return executor;
   }
 
 }
